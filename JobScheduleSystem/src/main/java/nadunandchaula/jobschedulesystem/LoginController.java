@@ -85,36 +85,36 @@ public class LoginController extends Thread {
         stage.close();
     }
     private void sendLoginEmail(String userID) throws MessagingException, SQLException {
-        LoginModel loginmodel = new LoginModel();
-        Connection conn = loginmodel.getConnection();
-        if (conn == null) {
-            showAlert(Alert.AlertType.ERROR, "Database Error", "Unable to connect to the database.");
+        // Get user info from our simulated database
+        LoginModel.UserInfo userInfo = LoginModel.getUserInfo(userID);
+        
+        if (userInfo == null) {
+            showAlert(Alert.AlertType.ERROR, "User Error", "Unable to find user information.");
             return;
         }
-
-        String messageQuery = "SELECT * FROM login WHERE id = ?";
-        PreparedStatement statement = conn.prepareStatement(messageQuery);
-        statement.setString(1, userID);
-        ResultSet resultSet = statement.executeQuery();
-
-        if (resultSet.next()) {
-            String userName = resultSet.getString(1);
-            String userEmail = resultSet.getString(5);
-
-            if (userEmail != null && !userEmail.isEmpty()) {
-                String subject = "Login Notification";
-                String body = "Dear " + userName + ",\n\nYou have successfully logged in.\n\nBest regards,\nFact One Auto Care";
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                EmailUtil.sendEmail(userEmail, subject, body);
+    
+        String userName = userInfo.getId(); // Using ID as name for simplicity
+        String userEmail = userInfo.getEmail();
+    
+        if (userEmail != null && !userEmail.isEmpty()) {
+            String subject = "Login Notification";
+            String body = "Dear " + userName + ",\n\nYou have successfully logged in.\n\nBest regards,\nFact One Auto Care";
+            
+            // Optional: simulate delay for realism
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
+            
+            // Uncomment to actually send email (if email configuration is correct)
+            // EmailUtil.sendEmail(userEmail, subject, body);
+            
+            // For testing without sending actual emails
+            System.out.println("Simulating email sending to: " + userEmail);
+            System.out.println("Subject: " + subject);
+            System.out.println("Body: " + body);
         }
-        resultSet.close();
-        statement.close();
-        conn.close();
     }
 
     public void closeBtn(ActionEvent actionEvent) {

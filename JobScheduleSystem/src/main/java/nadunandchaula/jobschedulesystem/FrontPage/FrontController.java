@@ -12,6 +12,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.util.Duration;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +22,9 @@ import java.util.Map;
 import javax.mail.*;
 import javax.mail.internet.*;
 import java.util.Properties;
+import javafx.application.Platform;
+import javafx.print.PrinterJob;
+import javafx.stage.Window;
 
 public class FrontController {
 
@@ -304,6 +308,7 @@ public class FrontController {
         tableView.getSelectionModel().clearSelection();
     }
 
+    @FXML
     public void TotleBtnClick(ActionEvent actionEvent) {
         calculateTotal();
     }
@@ -317,15 +322,7 @@ public class FrontController {
             Job matchedJob = jobList.get(0);
             String ownerName = matchedJob.getCustomer_Name();
 
-            Map<String, Double> jobPrices = new HashMap<>();
-            jobPrices.put("Vehicle Full Service", 4400.0);
-            jobPrices.put("Vehicle Normal Service", 11200.0);
-            jobPrices.put("Vehicle body wash", 5000.0);
-            jobPrices.put("Vehicle Running Repair", 4300.0);
-            jobPrices.put("Vehicle Brakes Service", 8100.0);
-            jobPrices.put("Vehicle Tire Rotation", 7800.0);
-            jobPrices.put("Vehicle Inspection", 2500.0);
-            jobPrices.put("Vehicle Scan/Diagnose", 3800.0);
+            Map<String, Double> jobPrices = getJobPrices();
 
             double totalPrice = 0.0;
             String[] selectedJobs = matchedJob.getTimes().split(", ");
@@ -353,38 +350,36 @@ public class FrontController {
                     resultBoxJob4.getId(), resultBoxJob5.getId(), resultBoxJob6.getId(),
                     resultBoxJob7.getId(), resultBoxJob8.getId()};
 
-            String[] jobNames = {
-                    "Vehicle Full Service", "Vehicle Normal Service", "Vehicle Body Wash",
-                    "Vehicle Running Repair", "Vehicle Brakes Service", "Vehicle Tire Rotation",
-                    "Vehicle Inspection", "Vehicle Scan/Diagnose"
-            };
-
+            // Populate the visible job result boxes with job name + price
             for (int i = 0; i < jobLabels.length; i++) {
                 if (i < selectedJobs.length) {
+                    String jobName = selectedJobs[i];
+                    Double price = jobPrices.get(jobName);
+                    String text = (price != null) ? String.format("%s - Rs %.2f", jobName, price) : jobName;
                     switch (jobLabels[i]) {
                         case "resultBoxJob1":
-                            resultBoxJob1.setText(jobNames[i]);
+                            resultBoxJob1.setText(text);
                             break;
                         case "resultBoxJob2":
-                            resultBoxJob2.setText(jobNames[i]);
+                            resultBoxJob2.setText(text);
                             break;
                         case "resultBoxJob3":
-                            resultBoxJob3.setText(jobNames[i]);
+                            resultBoxJob3.setText(text);
                             break;
                         case "resultBoxJob4":
-                            resultBoxJob4.setText(jobNames[i]);
+                            resultBoxJob4.setText(text);
                             break;
                         case "resultBoxJob5":
-                            resultBoxJob5.setText(jobNames[i]);
+                            resultBoxJob5.setText(text);
                             break;
                         case "resultBoxJob6":
-                            resultBoxJob6.setText(jobNames[i]);
+                            resultBoxJob6.setText(text);
                             break;
                         case "resultBoxJob7":
-                            resultBoxJob7.setText(jobNames[i]);
+                            resultBoxJob7.setText(text);
                             break;
                         case "resultBoxJob8":
-                            resultBoxJob8.setText(jobNames[i]);
+                            resultBoxJob8.setText(text);
                             break;
                     }
                 } else {
@@ -424,60 +419,108 @@ public class FrontController {
         }
     }
 
-    public void PrintMailBtnClick(ActionEvent actionEvent) {
-        EmailData emailData = (EmailData) resultBox.getUserData();
-        if (emailData != null) {
-            sendBillViaEmail(emailData.recipientEmail, emailData.ownerName, emailData.vehicleNumber, emailData.finalPrice, emailData.discountAmount, emailData.performedJobs);
-        } else {
-            System.out.println("No data to send.");
+    // Helper that returns the official prices for each job
+    private Map<String, Double> getJobPrices() {
+        Map<String, Double> jobPrices = new HashMap<>();
+        jobPrices.put("Vehicle Full Service", 4400.0);
+        jobPrices.put("Vehicle Normal Service", 11200.0);
+        jobPrices.put("Vehicle body wash", 5000.0);
+        jobPrices.put("Vehicle Running Repair", 4300.0);
+        jobPrices.put("Vehicle Brakes Service", 8100.0);
+        jobPrices.put("Vehicle Tire Rotation", 7800.0);
+        jobPrices.put("Vehicle Inspection", 2500.0);
+        jobPrices.put("Vehicle Scan/Diagnose", 3800.0);
+        return jobPrices;
+    }
+
+    private String generateBillContent(String ownerName, String vehicleNumber, double finalPrice, double discountAmount, String[] performedJobs) {
+        Map<String, Double> jobPrices = getJobPrices();
+        StringBuilder jobListBuilder = new StringBuilder();
+        for (String job : performedJobs) {
+            Double price = jobPrices.get(job);
+            if (price != null) jobListBuilder.append(String.format(" - %s : Rs %.2f\n", job, price));
+            else jobListBuilder.append(String.format(" - %s\n", job));
         }
+        return String.format("Dear %s,\n\n" +
+                "Thank you for choosing our service.\n\n" +
+                "Vehicle Number: %s\n" +
+                "Jobs Performed:\n%s\n" +
+                "Final Price: %.2f\n" +
+                "Discount Applied: %.2f\n\n" +
+                "Best Regards,\nFact One Auto Care", ownerName, vehicleNumber, jobListBuilder.toString(), finalPrice, discountAmount);
     }
 
     private void sendBillViaEmail(String recipientEmail, String ownerName, String vehicleNumber, double finalPrice, double discountAmount, String[] performedJobs) {
+        // Read SMTP credentials from resources/email.properties if available
+        Properties emailProps = new Properties();
         String senderEmail = "factoneautocare@gmail.com";
-        String senderPassword = "gtfk fpnj axvx pqgh";
+        String senderPassword = "gtfk fpnj axvx pqgh"; // fallback (replace with app password)
 
-        Properties properties = new Properties();
-        properties.put("mail.smtp.auth", "true");
-        properties.put("mail.smtp.starttls.enable", "true");
-        properties.put("mail.smtp.host", "smtp.gmail.com");
-        properties.put("mail.smtp.port", "587");
-
-        Session session = Session.getInstance(properties, new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(senderEmail, senderPassword);
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream("email.properties")) {
+            if (in != null) {
+                emailProps.load(in);
+                senderEmail = emailProps.getProperty("mail.username", senderEmail);
+                senderPassword = emailProps.getProperty("mail.password", senderPassword);
             }
-        });
-        try {
-            Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(senderEmail));
-            message.setRecipients(
-                    Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
-            message.setSubject("Your Vehicle Service Bill");
-
-            StringBuilder jobListBuilder = new StringBuilder();
-            for (String job : performedJobs) {
-                jobListBuilder.append(job).append("\n");
-            }
-            String emailContent = String.format(
-                    "Dear %s,\n\n" +
-                            "Thank you for choosing our service.\n\n" +
-                            "Vehicle Number: %s\n" +
-                            "Jobs Performed:\n%s\n" +
-                            "Total Price: %.2f\n" +
-                            "Discount Applied: %.2f\n" +
-                            "Final Price: %.2f\n\n" +
-                            "We appreciate your business!\n\n" +
-                            "Best Regards,\nYour Service Team",
-                    ownerName, vehicleNumber, jobListBuilder.toString(), finalPrice + discountAmount, discountAmount, finalPrice);
-            message.setText(emailContent);
-            Transport.send(message);
-            System.out.println("Bill sent successfully to " + recipientEmail);
-
-        } catch (MessagingException e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            System.err.println("Could not load email.properties: " + e.getMessage());
         }
+
+        if (recipientEmail == null || recipientEmail.isEmpty()) {
+            Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Email Error", "Recipient email is empty. Please ensure customer has an email address."));
+            return;
+        }
+
+        // Capture credentials as final variables for use inside lambdas
+        final String smtpUser = senderEmail;
+        final String smtpPass = senderPassword;
+
+        // Send email in a background thread to avoid blocking the UI
+        new Thread(() -> {
+            Properties props = new Properties();
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.host", "smtp.gmail.com");
+            props.put("mail.smtp.port", "587");
+
+            Session session = Session.getInstance(props, new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(smtpUser, smtpPass);
+                }
+            });
+
+            try {
+                Message message = new MimeMessage(session);
+                message.setFrom(new InternetAddress(smtpUser));
+                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
+                message.setSubject("Your Vehicle Service Bill");
+
+                StringBuilder jobListBuilder = new StringBuilder();
+                for (String job : performedJobs) {
+                    jobListBuilder.append(job).append("\n");
+                }
+                String emailContent = String.format(
+                        "Dear %s,\n\n" +
+                                "Thank you for choosing our service.\n\n" +
+                                "Vehicle Number: %s\n" +
+                                "Jobs Performed:\n%s\n" +
+                                "Total Price: %.2f\n" +
+                                "Discount Applied: %.2f\n" +
+                                "Final Price: %.2f\n\n" +
+                                "We appreciate your business!\n\n" +
+                                "Best Regards,\nYour Service Team",
+                        ownerName, vehicleNumber, jobListBuilder.toString(), finalPrice + discountAmount, discountAmount, finalPrice);
+                message.setText(emailContent);
+                Transport.send(message);
+
+                Platform.runLater(() -> showAlert(Alert.AlertType.INFORMATION, "Email Sent", "Bill sent successfully to " + recipientEmail));
+                System.out.println("Bill sent successfully to " + recipientEmail);
+            } catch (MessagingException e) {
+                e.printStackTrace();
+                Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Email Error", "Failed to send bill: " + e.getMessage()));
+            }
+        }).start();
     }
 
     private static class EmailData {
@@ -498,6 +541,29 @@ public class FrontController {
         }
     }
 
+    @FXML
+    public void PrintMailBtnClick(ActionEvent actionEvent) {
+        EmailData emailData = (EmailData) resultBox.getUserData();
+        if (emailData != null) {
+            // Generate bill content and put it into textArea for printing
+            String billContent = generateBillContent(emailData.ownerName, emailData.vehicleNumber, emailData.finalPrice, emailData.discountAmount, emailData.performedJobs);
+            textArea.setText(billContent);
+
+            // Print the bill first
+            Window window = ((Node) actionEvent.getSource()).getScene().getWindow();
+            boolean printed = printNode(window, textArea);
+            if (printed) {
+                // After successful print, send email
+                sendBillViaEmail(emailData.recipientEmail, emailData.ownerName, emailData.vehicleNumber, emailData.finalPrice, emailData.discountAmount, emailData.performedJobs);
+            } else {
+                System.out.println("Printing was cancelled or failed; email not sent.");
+            }
+        } else {
+            System.out.println("No data to send.");
+        }
+    }
+
+    @FXML
     public void CloseBtnClick(ActionEvent actionEvent) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Confirmation");
@@ -511,7 +577,54 @@ public class FrontController {
             stage.close();
         }
     }
+
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(type);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
+    }
+
+    private boolean printNode(Window ownerWindow, javafx.scene.Node nodeToPrint) {
+        PrinterJob job = PrinterJob.createPrinterJob();
+        if (job == null) {
+            System.err.println("No printers available.");
+            showAlert(Alert.AlertType.ERROR, "Print Error", "No printers available.");
+            return false;
+        }
+        boolean proceed = job.showPrintDialog(ownerWindow);
+        if (!proceed) {
+            System.out.println("Print dialog cancelled.");
+            return false;
+        }
+        boolean printed = job.printPage(nodeToPrint);
+        if (printed) {
+            job.endJob();
+            System.out.println("Printed successfully.");
+            return true;
+        } else {
+            System.err.println("Printing failed.");
+            showAlert(Alert.AlertType.ERROR, "Print Error", "Failed to print the bill.");
+            return false;
+        }
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

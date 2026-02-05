@@ -1,0 +1,15 @@
+# Ignore IDE and build artifacts
+/.classpath
+/.project
+/.settings/
+/.idea/
+*.iml
+/target/
+
+# Ignore local config with credentials
+/src/main/resources/email.properties
+/src/main/resources/db.properties
+
+# OS files
+.DS_Store
+Thumbs.db

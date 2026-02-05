@@ -87,7 +87,7 @@
    </Pane>
    <Pane layoutX="48.0" layoutY="436.0" prefHeight="191.0" prefWidth="747.0" style="-fx-background-color: #fefefe; -fx-background-radius: 20 20 20  20; -fx-border-color: #cdcd; -fx-border-radius: 20 20 20 20;">
       <children>
-         <TextField fx:id="textBox1" alignment="TOP_LEFT" focusTraversable="false" layoutX="44.0" layoutY="59.0" prefHeight="40.0" prefWidth="280.0" promptText="User ID :" style="-fx-background-color: transparent; -fx-border-color: #262626; -fx-border-width: 0px 0px 2px 0px;">
+         <TextField fx:id="textBox1" alignment="TOP_LEFT" focusTraversable="false" layoutX="44.0" layoutY="59.0" prefHeight="40.0" prefWidth="280.0" promptText="search:" style="-fx-background-color: transparent; -fx-border-color: #262626; -fx-border-width: 0px 0px 2px 0px;">
             <cursor>
                <Cursor fx:constant="HAND" />
             </cursor>

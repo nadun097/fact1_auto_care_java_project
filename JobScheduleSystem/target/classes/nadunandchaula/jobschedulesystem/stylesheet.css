@@ -47,3 +47,30 @@
     -fx-text-fill: white;
     -fx-transform: scale(1.05);
 }
+.green {
+    -fx-background-color: #adddfc;
+    -fx-text-fill: black;
+    -fx-background-radius: 10px;
+    -fx-cursor: hand;
+    -fx-transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.green:hover {
+    -fx-background-color: #7cfe80;
+    -fx-text-fill: white;
+    -fx-transform: scale(1.05);
+}
+
+.gray{
+    -fx-background-color: #adddfc;
+    -fx-text-fill: black;
+    -fx-background-radius: 10px;
+    -fx-cursor: hand;
+    -fx-transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.gray:hover {
+    -fx-background-color: #868686;
+    -fx-text-fill: white;
+    -fx-transform: scale(1.05);
+}
