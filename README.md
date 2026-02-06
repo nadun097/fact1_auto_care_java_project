@@ -2,12 +2,11 @@
 
 Fact1 Auto Care is a comprehensive JavaFX-based desktop application designed to streamline vehicle service operations for workshops and service centers. It allows administrators and staff to efficiently manage job scheduling, billing, and customer communication.
 
-## Demo Video
 
-<video width="600" controls>
-  <source src="assets/factone video.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+
+https://github.com/user-attachments/assets/6d6dac8d-1c30-4fa0-a5d3-ccc9f61c1bad
+
+
 
 
 Key Features:
