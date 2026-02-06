@@ -7,9 +7,6 @@ Fact1 Auto Care is a comprehensive JavaFX-based desktop application designed to 
 https://github.com/user-attachments/assets/6d6dac8d-1c30-4fa0-a5d3-ccc9f61c1bad
 
 
-## Demo Video
-
-[▶ Watch Demo](https://github.com/user-attachments/assets/6d6dac8d-1c30-4fa0-a5d3-ccc9f61c1bad)
 
 
 Key Features:
